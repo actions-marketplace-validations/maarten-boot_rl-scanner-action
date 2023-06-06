@@ -27,21 +27,24 @@ runs:
       run: |
         ls -l
         ls -l dist
+        chmod +r ${{ inputs.artifact-to-scan }}
         ls -l ${{ inputs.artifact-to-scan }}
         #
         xFile=$( basename ${{ inputs.artifact-to-scan }} )
         xDir=$( dirname ${{ inputs.artifact-to-scan }} )
+        xDir=$( realpath $xDir )
         rm -rf MyReportDir && mkdir MyReportDir
+        xReport=$( realpath MyReportDir )
         #
         set -x
-        docker run --rm \
-        -e RLSECURE_ENCODED_LICENSE -e RLSECURE_SITE_KEY \
-        -v MyReportDir:/report -v ${xDir}:/packages:ro \
-        reversinglabs/rl-scanner \
-        rl-scan --package-path=/packages/${xFile} --report-path=/report --report-format=all
-        RR=$?
+          docker run --rm \
+          -e RLSECURE_ENCODED_LICENSE -e RLSECURE_SITE_KEY \
+          -v ${xReport}:/report -v ${xDir}:/packages:ro \
+          reversinglabs/rl-scanner \
+          rl-scan --package-path=/packages/${xFile} --report-path=/report --report-format=all
+          RR=$?
         set +x
-
-        ls -l /report
+        #
+        ls -l ${xReport}
         exit ${RR}
       shell: bash
