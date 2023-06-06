@@ -1,0 +1,37 @@
+name: 'rl-scanner-action'
+author: 'Maarten Boot'
+description: 'Apply reversinglabs/rl-scanner and upload report, show and return status'
+
+branding:
+  icon: 'check'
+  color: 'green'
+
+inputs:
+  artifact-to-scan:  # id of input
+    description: 'The file artifact we will be scanning (a file path relative to the workspace)'
+    required: true
+
+outputs:
+  descripion:
+    description: 'The result of the action: a string terminanting in FAIL or PASS'
+    # value: ${{ steps.random-number-generator.outputs.random-number }}
+  status:
+    description: 'The single word result of the action: success, failure or error'
+    # value: ${{ steps.random-number-generator.outputs.random-number }}
+
+runs:
+  using: "composite"
+  steps:
+    # -------------------------------------------
+    - name: show the input
+      run: |
+        ls -l ${{ input.artifact-to-scan }}
+      shell: bash
+
+    # -------------------------------------------
+    - name: scan the file
+      env:
+      uses: docker://
+      with:
+        entrypoint:  entrypoint.sh
+        args: ${{ input.artifact-to-scan }}
