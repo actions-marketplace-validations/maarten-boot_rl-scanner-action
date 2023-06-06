@@ -26,6 +26,7 @@ runs:
     - name: show the input
       run: |
         ls -l
+        ls -l dist
         ls -l ${{ inputs.artifact-to-scan }}
         #
         xFile=$( basename ${{ inputs.artifact-to-scan }} )
