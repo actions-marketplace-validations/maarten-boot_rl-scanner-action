@@ -33,4 +33,15 @@ runs:
       uses: docker://reversinglabs/rl-scanner
       with:
         entrypoint: /bin/bash
-        args: ls -l /github/workspace
+        args: ls -l >>$GITHUB_OUTPUT
+
+    # -------------------------------------------
+    - name: show the input
+      run: |
+        docker run --rm hello-world
+      shell: bash
+    # -------------------------------------------
+    - name: show the input
+      run: |
+        docker build -t aaabbbccc .
+      shell: bash
