@@ -33,9 +33,10 @@ runs:
         rm -rf .report_dir && mkdir .report_dir
         #
         set -x
-        docker run --rm  reversinglabs/rl-scanner \
+        docker run --rm \
         -e RLSECURE_ENCODED_LICENSE -e RLSECURE_SITE_KEY \
         -v ./report_dir:/report -v ${xDir}:/packages:ro \
+        reversinglabs/rl-scanner \
         rl-scan --package-path=/packages/${xFile} --report-path=/report --report-format=all
         RR=$?
         set +x
