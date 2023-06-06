@@ -28,7 +28,6 @@ runs:
       run: |
         # -----------------------------
         # verbose and feedback during test
-        set +e
         ls -l
         ls -l dist
         chmod +r ${{ inputs.artifact-to-scan }}
@@ -36,6 +35,8 @@ runs:
     - name: show the input
       shell: bash
       run: |
+        set +e
+        set +o pipefail
         # ----------------------------
         # prepare
         xFile=$( basename ${{ inputs.artifact-to-scan }} )
