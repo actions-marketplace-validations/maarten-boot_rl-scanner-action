@@ -30,7 +30,7 @@ runs:
 
     # -------------------------------------------
     - name: scan the file
-      uses: reversinglabs/rl-scanner
+      uses: reversinglabs/rl-scanner@latest
       with:
         entrypoint:  entrypoint.sh
         args: ${{ inputs.artifact-to-scan }}
