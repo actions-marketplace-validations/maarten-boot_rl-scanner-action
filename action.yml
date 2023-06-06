@@ -35,42 +35,64 @@ runs:
     - name: show the input
       shell: bash
       run: |
-        set +e
-        set +o pipefail
         # ----------------------------
-        # prepare
-        xFile=$( basename ${{ inputs.artifact-to-scan }} )
-        xDir=$( dirname ${{ inputs.artifact-to-scan }} )
-        xDir=$( realpath $xDir )
-        rm -rf MyReportDir && mkdir MyReportDir
-        xReport=$( realpath MyReportDir )
+        prepare()
+        {
+          xFile=$( basename ${{ inputs.artifact-to-scan }} )
+          xDir=$( dirname ${{ inputs.artifact-to-scan }} )
+          xDir=$( realpath $xDir )
+          rm -rf MyReportDir && mkdir MyReportDir
+          xReport=$( realpath MyReportDir )
+        }
         # ---------------------------
-        # do the actual scan
-        set -x
+        doScan()
+        {
+          set +e # temporary supress error on command we will do that ourselves here
           docker run --rm \
           -e RLSECURE_ENCODED_LICENSE -e RLSECURE_SITE_KEY \
           -v ${xReport}:/report -v ${xDir}:/packages:ro \
           reversinglabs/rl-scanner \
-          rl-scan --package-path=/packages/${xFile} --report-path=/report --report-format=all 2>2 | tee 1
+          rl-scan \
+            --package-path=/packages/${xFile} \
+            --report-path=/report \
+            --report-format=all 2>2 1>1
           RR=$?
-        set +x
-        # ---------------------------
-        STATUS=$( grep 'Scan result:' 1 )
-        [ -z "$STATUS" ] && {
-          msg="Fatal: cannot find the Scan result in the output"
-          echo "::error::$msg"
-          echo "description=$msg" >>$GITHUB_OUTPUT
-          echo "status=error" >>$GITHUB_OUTPUT
-          exit 101
+          set -e
+          cat 1
+          STATUS=$( grep 'Scan result:' 1 )
         }
         # ---------------------------
-        echo "description=$STATUS" >>$GITHUB_OUTPUT
-        if [ echo $STATUS" | grep -q FAIL ]
-        then
-          echo "status=error" >>$GITHUB_OUTPUT
-        else
-          echo "status=success" >>$GITHUB_OUTPUT
-        fi
+        statusError()
+        {
+          [ -z "$STATUS" ] && {
+            cat 2
+            msg="Fatal: cannot find the Scan result in the output"
+            echo "::error::$msg"
+            echo "description=$msg" >>$GITHUB_OUTPUT
+            echo "status=error" >>$GITHUB_OUTPUT
+            exit 101
+          }
+        }
         # ---------------------------
-        ls -l ${xReport}
-        exit ${RR}
+        statusPassFail()
+        {
+          echo "description=$STATUS" >>$GITHUB_OUTPUT
+          if [ echo "$STATUS" | grep -q FAIL ]
+          then
+            echo "status=error" >>$GITHUB_OUTPUT
+          else
+            echo "status=success" >>$GITHUB_OUTPUT
+          fi
+          ls -l ${xReport}
+        }
+        # ---------------------------
+        main()
+        {
+          prepare
+          doScan
+          statusError
+          statusPassFail
+          exit ${RR}
+        }
+        main
+
