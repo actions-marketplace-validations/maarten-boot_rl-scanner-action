@@ -30,7 +30,6 @@ runs:
 
     # -------------------------------------------
     - name: scan the file
-      env:
       uses: docker://
       with:
         entrypoint:  entrypoint.sh
