@@ -24,27 +24,52 @@ runs:
   steps:
     # -------------------------------------------
     - name: show the input
+      shell: bash
       run: |
+        # -----------------------------
+        # verbose and feedback during test
+        set +e
         ls -l
         ls -l dist
         chmod +r ${{ inputs.artifact-to-scan }}
         ls -l ${{ inputs.artifact-to-scan }}
-        #
+    - name: show the input
+      shell: bash
+      run: |
+        # ----------------------------
+        # prepare
         xFile=$( basename ${{ inputs.artifact-to-scan }} )
         xDir=$( dirname ${{ inputs.artifact-to-scan }} )
         xDir=$( realpath $xDir )
         rm -rf MyReportDir && mkdir MyReportDir
         xReport=$( realpath MyReportDir )
-        #
+        # ---------------------------
+        # do the actual scan
         set -x
           docker run --rm \
           -e RLSECURE_ENCODED_LICENSE -e RLSECURE_SITE_KEY \
           -v ${xReport}:/report -v ${xDir}:/packages:ro \
           reversinglabs/rl-scanner \
-          rl-scan --package-path=/packages/${xFile} --report-path=/report --report-format=all
+          rl-scan --package-path=/packages/${xFile} --report-path=/report --report-format=all 2>2 | tee 1
           RR=$?
         set +x
-        #
+        # ---------------------------
+        STATUS=$( grep 'Scan result:' 1 )
+        [ -z "$STATUS" ] && {
+          msg="Fatal: cannot find the Scan result in the output"
+          echo "::error::$msg"
+          echo "description=$msg" >>$GITHUB_OUTPUT
+          echo "status=error" >>$GITHUB_OUTPUT
+          exit 101
+        }
+        # ---------------------------
+        echo "description=$STATUS" >>$GITHUB_OUTPUT
+        if [ echo $STATUS" | grep -q FAIL ]
+        then
+          echo "status=error" >>$GITHUB_OUTPUT
+        else
+          echo "status=success" >>$GITHUB_OUTPUT
+        fi
+        # ---------------------------
         ls -l ${xReport}
         exit ${RR}
-      shell: bash
