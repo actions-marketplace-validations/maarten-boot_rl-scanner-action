@@ -1,4 +1,4 @@
-name: 'rl-scanner-action'
+name: 'action-rl-scanner'
 author: 'Maarten Boot'
 description: 'Apply reversinglabs/rl-scanner and upload report, show and return status'
 
